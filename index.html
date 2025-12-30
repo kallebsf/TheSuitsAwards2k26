@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>THE SUITS | Tradição e Excelência</title>
+    
+    <link rel="icon" type="image/png" href="ssss.png">
+    <link rel="apple-touch-icon" href="ssss.png">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js" defer></script>
+    <script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js" defer></script>
+
+    <style>
+        :root {
+            --gold: #c5a059;
+            --gold-bright: #f3e5ab;
+            --deep-black: #080808;
+            --white: #f4f4f4;
+        }
+
+        html.lenis, html.lenis body { height: auto; }
+        
+        /* Oculta Scrollbar mantendo funcionalidade */
+        html, body { scrollbar-width: none; -ms-overflow-style: none; }
+        html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            background: var(--deep-black); 
+            color: var(--white); 
+            font-family: 'Inter', sans-serif; 
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            /* Melhora performance de renderização de texto */
+            text-rendering: optimizeLegibility;
+        }
+
+        /* --- OTIMIZAÇÃO DE IMAGEM --- */
+        .gold-logo {
+            /* Dica: Para performance máxima no mobile, o ideal seria salvar a imagem já dourada no Photoshop
+               e remover esse filtro CSS, pois filtros consomem muita bateria/GPU. */
+            filter: sepia(1) saturate(2) hue-rotate(10deg) brightness(0.9) contrast(1.1);
+            width: 80px;
+            /* will-change avisa o navegador que isso vai animar */
+            will-change: transform, opacity;
+        }
+
+        .btn-pattern {
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 22px 50px;
+            font-family: 'Bebas Neue';
+            font-size: 1.4rem;
+            letter-spacing: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease; /* Reduzi tempo para parecer mais responsivo no touch */
+            text-align: center;
+            text-transform: uppercase;
+            /* Evita flash azul no toque em Android */
+            -webkit-tap-highlight-color: transparent; 
+        }
+
+        .btn-pattern:active {
+            transform: scale(0.98); /* Feedback tátil visual */
+        }
+
+        #entry-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 2000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            will-change: opacity, transform;
+        }
+
+        section { 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column;
+            justify-content: center; 
+            padding: 100px 12%;
+            position: relative;
+            /* OTIMIZAÇÃO: Não renderiza se estiver fora da tela */
+            content-visibility: auto; 
+            contain-intrinsic-size: 100vh;
+        }
+
+        .chapter-title {
+            font-family: 'Bebas Neue';
+            font-size: clamp(3.5rem, 10vw, 8rem);
+            line-height: 0.9;
+            background: linear-gradient(180deg, var(--gold-bright) 0%, var(--gold) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        .main-title {
+            font-size: clamp(4.5rem, 18vw, 13rem); /* Ajustado max-width para telas menores */
+            letter-spacing: -2px;
+        }
+
+        .year-marker {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 1.2rem;
+            color: var(--gold);
+            margin-bottom: 15px;
+            display: block;
+            border-left: 1px solid var(--gold);
+            padding-left: 20px;
+        }
+
+        .narrative-body {
+            max-width: 680px;
+            font-size: clamp(1rem, 4vw, 1.25rem); /* Fonte levemente menor no mobile para leitura */
+            line-height: 1.8;
+            color: rgba(244, 244, 244, 0.85);
+            font-weight: 300;
+        }
+
+        .highlight { 
+            color: var(--white);
+            font-family: 'Playfair Display', serif;
+            font-weight: 400;
+            border-bottom: 1px solid var(--gold);
+        }
+
+        .overlay-vignette {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(0,0,0,0) 20%, rgba(0,0,0,0.8) 100%);
+            z-index: 1500; pointer-events: none;
+        }
+
+        /* --- OTIMIZAÇÃO DO MODAL --- */
+        #vote-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 3000;
+            display: none; justify-content: center; align-items: center;
+            opacity: 0;
+            backdrop-filter: blur(5px); /* Blur reduzido para pesar menos na GPU */
+            will-change: opacity;
+        }
+
+        .modal-wrapper {
+            width: 95%; max-width: 800px; height: 85vh;
+            background: #000;
+            border: 1px solid var(--gold);
+            display: flex; flex-direction: column;
+            will-change: transform;
+        }
+
+        .modal-header {
+            padding: 15px;
+            display: flex; justify-content: flex-end;
+            border-bottom: 1px solid rgba(197, 160, 89, 0.3);
+        }
+
+        .close-btn {
+            background: transparent; border: none;
+            color: var(--gold); font-family: 'Bebas Neue';
+            font-size: 1.2rem; padding: 10px;
+        }
+
+        .modal-content { flex-grow: 1; overflow: hidden; }
+        .modal-content iframe { width: 100%; height: 100%; border: none; }
+
+        /* --- CSS RESPONSIVO OTIMIZADO --- */
+        @media (max-width: 768px) {
+            section { 
+                padding: 60px 6%; /* Mais espaço útil na tela */
+                min-height: 90vh; /* Ajuste para barras de navegador mobile */
+            }
+            .reveal-right { text-align: left; align-self: flex-start; }
+            .btn-pattern { width: 100%; padding: 20px 0; font-size: 1.2rem; }
+            .modal-wrapper { width: 100%; height: 100%; border: none; }
+            
+            /* Remove efeitos pesados em telas pequenas se necessário */
+            .overlay-vignette { opacity: 0.6; } 
+        }
+
+        footer {
+            padding: 80px 6% 40px;
+            text-align: center;
+            background: linear-gradient(to top, #000, transparent);
+        }
+
+        .glory-text {
+            color: var(--gold);
+            font-family: 'Playfair Display', serif;
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            margin-top: 40px;
+            opacity: 0.8;
+            line-height: 1.6;
+        }
+        
+        /* Classes auxiliares para animação com GPU */
+        .reveal, .reveal-up {
+            will-change: transform, opacity;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="overlay-vignette"></div>
+
+    <audio id="theme-music" loop preload="none">
+        <source src="music/1 (1).mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="entry-screen">
+        <img src="ssss.png" alt="Sociedade Suits" class="gold-logo" style="margin-bottom: 40px;">
+        <p style="letter-spacing: 8px; font-size: 0.75rem; margin-bottom: 30px; color: var(--gold); text-transform: uppercase; font-weight: 600;">Sociedade Suits</p>
+        <button id="start-btn" class="btn-pattern" onclick="initExperience()">A Nossa Jornada</button>
+    </div>
+
+    <div id="vote-modal">
+        <div class="modal-wrapper">
+            <div class="modal-header">
+                <button class="close-btn" onclick="closeVoteModal()">FECHAR ✕</button>
+            </div>
+            <div class="modal-content">
+                <iframe loading="lazy" src="https://tally.so/r/Y5REaW" title="Votação"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-content" style="opacity: 0; visibility: hidden;">
+        
+        <section style="align-items: center; text-align: center;">
+            <div class="reveal-up">
+                <span class="year-marker" style="border: none; padding: 0;">2023 — ∞</span>
+                <h1 class="chapter-title main-title">THE SUITS</h1>
+                <p style="letter-spacing: 10px; color: var(--gold); font-size: 0.85rem; text-transform: uppercase; font-weight: 300;">Uma Aliança de Propósito</p>
+            </div>
+        </section>
+
+        <section>
+            <div class="reveal reveal-left">
+                <span class="year-marker">Capítulo I</span>
+                <h2 class="chapter-title">A GÊNESE</h2>
+                <div class="narrative-body">
+                    <p>Em fevereiro de 2023, <span class="highlight">quatro trajetórias</span> tornaram-se indivisíveis. Sem artifícios ou pretensões, fomos unidos por um compromisso mútuo de forjar algo genuinamente distinto.</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="reveal reveal-right">
+                <span class="year-marker">Capítulo II</span>
+                <h2 class="chapter-title">A TÊMPERA</h2>
+                <div class="narrative-body">
+                    <p>O ano de 2024 consolidou nossa identidade. Entre o rigor das adversidades e o valor da lealdade, nossa essência tornou-se <span class="highlight">inatingível</span>. Compreendemos que a verdadeira nobreza reside na perseverança.</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="reveal reveal-left">
+                <span class="year-marker">Capítulo III</span>
+                <h2 class="chapter-title">O APURAMENTO</h2>
+                <div class="narrative-body">
+                    <p>Em 2025, o discernimento guiou nossas escolhas. A seleção natural do destino revelou a força do que é <span class="highlight">essencial</span>. Tornamo-nos mais restritos em número, porém absolutos em convicção.</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="reveal reveal-right">
+                <span class="year-marker">Capítulo IV</span>
+                <h2 class="chapter-title">O ADVENTO</h2>
+                <div class="narrative-body">
+                    <p>O ano de 2026 simboliza a nossa transição definitiva. O que foi cultivado no silêncio agora enfrenta o mundo. A <span class="highlight">nossa irmandade</span> é o legado que portamos para o futuro.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="vote-section">
+            <div class="reveal-up" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+                <h2 class="chapter-title">AWARDS 2025</h2>
+                <p style="opacity: 0.7; letter-spacing: 5px; margin-bottom: 50px; font-size: 1rem; font-family: 'Playfair Display'; text-align: center;">O Reconhecimento do Mérito</p>
+                <button class="btn-pattern" onclick="openVoteModal()">Registrar Voto</button>
+            </div>
+        </section>
+
+        <footer>
+            <img src="ssss.png" alt="Logo" class="gold-logo" style="width: 50px; margin-bottom: 30px; opacity: 0.7;">
+            <p style="letter-spacing: 3px; font-size: 0.7rem; opacity: 0.5;">MEMÓRIAS DA SOCIEDADE • EST. 2023</p>
+            <p class="glory-text">AO ÚNICO DEUS VERDADEIRO, TODA HONRA E GLÓRIA POR MEIO DE JESUS CRISTO.</p>
+        </footer>
+    </div>
+
+    <script>
+        let lenisInstance;
+        let isMobile = window.innerWidth <= 768;
+
+        // Aguarda carregamento total do DOM
+        document.addEventListener("DOMContentLoaded", () => {
+             // Otimização: Só registra ScrollTrigger se os scripts carregaram
+             if(typeof gsap !== 'undefined') {
+                gsap.registerPlugin(ScrollTrigger);
+             }
+        });
+
+        function initExperience() {
+            const music = document.getElementById('theme-music');
+            
+            // Promise simples para garantir play sem erros
+            const playAudio = async () => {
+                try {
+                    await music.play();
+                } catch(err) {
+                    console.log("Autoplay bloqueado pelo navegador");
+                }
+            };
+            playAudio();
+
+            // Configuração do Lenis otimizada para Mobile
+            lenisInstance = new Lenis({
+                duration: isMobile ? 1.2 : 1.5, // Scroll mais rápido no mobile
+                easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+                smoothWheel: true,
+                touchMultiplier: isMobile ? 2 : 1.5, // Mais sensibilidade no touch
+                infinite: false,
+            });
+
+            function raf(time) {
+                lenisInstance.raf(time);
+                requestAnimationFrame(raf);
+            }
+            requestAnimationFrame(raf);
+
+            // Animação de Entrada
+            const entryTl = gsap.timeline({
+                onComplete: () => {
+                    document.getElementById('entry-screen').style.display = 'none';
+                }
+            });
+
+            entryTl.to("#entry-screen", {
+                opacity: 0,
+                duration: 1,
+                ease: "power2.inOut"
+            })
+            .to("#main-content", { 
+                opacity: 1, 
+                visibility: "visible", 
+                duration: 1.5 
+            }, "-=0.5");
+
+            initAnimations();
+        }
+
+        function initAnimations() {
+            // Usar batch ou simplificar seletores
+            const reveals = gsap.utils.toArray(".reveal");
+            
+            reveals.forEach((el) => {
+                const isLeft = el.classList.contains('reveal-left');
+                // Reduz distância de movimento no mobile para evitar lag
+                const xDist = isLeft ? (isMobile ? -30 : -50) : (isMobile ? 30 : 50);
+                
+                gsap.fromTo(el, 
+                    { opacity: 0, x: xDist },
+                    {
+                        scrollTrigger: {
+                            trigger: el,
+                            start: "top 85%",
+                            toggleActions: "play none none reverse"
+                        },
+                        opacity: 1, 
+                        x: 0, 
+                        duration: 1.5, 
+                        ease: "power2.out"
+                    }
+                );
+            });
+
+            gsap.utils.toArray(".reveal-up").forEach((el) => {
+                gsap.fromTo(el, 
+                    { opacity: 0, y: 40 },
+                    {
+                        scrollTrigger: {
+                            trigger: el,
+                            start: "top 90%",
+                        },
+                        opacity: 1, y: 0, duration: 1.5, ease: "power3.out"
+                    }
+                );
+            });
+        }
+
+        /* --- CONTROLE DO MODAL --- */
+        function openVoteModal() {
+            const modal = document.getElementById('vote-modal');
+            modal.style.display = 'flex';
+            if(lenisInstance) lenisInstance.stop();
+
+            gsap.to(modal, { opacity: 1, duration: 0.3 });
+            gsap.fromTo(".modal-wrapper", 
+                { scale: 0.95, y: 10 },
+                { scale: 1, y: 0, duration: 0.4, ease: "back.out(1.2)" }
+            );
+        }
+
+        function closeVoteModal() {
+            const modal = document.getElementById('vote-modal');
+            gsap.to(modal, {
+                opacity: 0,
+                duration: 0.3,
+                onComplete: () => {
+                    modal.style.display = 'none';
+                    if(lenisInstance) lenisInstance.start();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
